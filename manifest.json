@@ -1,0 +1,9 @@
+{
+  "name": "MarketPlace",
+  "short_name": "MarketPlace",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f68b1e",
+  "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
