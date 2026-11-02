@@ -1,0 +1,63 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f4f4f4;margin:0;padding:10px 10px 40px;max-width:800px;margin:auto}
+button{font:inherit;padding:8px 12px;border:0;border-radius:8px;background:#f68b1e;color:#fff;cursor:pointer}
+button.g{background:#fff;color:#333;border:1px solid #ccc}button.r{background:#e11d48}
+.c{background:#fff;border-radius:10px;padding:12px;margin:8px 0}
+.t{display:flex;gap:6px;overflow-x:auto;margin:8px 0}.t button{background:#fff;color:#333;border:1px solid #ddd;white-space:nowrap}.t button.on{background:#f68b1e;color:#fff}
+input,select{font:inherit;padding:8px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+.r2{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+small{color:#777}.n{font-size:26px;font-weight:700;color:#f68b1e}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+code{background:#eee;padding:2px 6px;border-radius:4px;font-size:15px}
+</style></head><body><div id="app"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getFirestore,collection,getDocs,doc,setDoc,updateDoc,deleteDoc,deleteField,writeBatch,Timestamp,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const ADMIN_EMAIL="YOUR_ADMIN_EMAIL@gmail.com",BRAND="MarketPlace";
+const fb=initializeApp({apiKey:"AIzaSyAPKiT3CjjgeDcPRbchediVNnHm0vP7J1o",authDomain:"marketplace-582c0.firebaseapp.com",projectId:"marketplace-582c0",storageBucket:"marketplace-582c0.firebasestorage.app",messagingSenderId:"591854592836",appId:"1:591854592836:web:00469e8b690aa11e772d11"});
+const auth=getAuth(fb),db=getFirestore(fb),$=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let T='over',U=[],SH={},PR={},CD=[],OR=[],RF='all',Q='';
+window.login=()=>signInWithPopup(auth,new GoogleAuthProvider());
+window.out=()=>signOut(auth);
+window.tab=k=>{T=k;draw()};
+onAuthStateChanged(auth,async u=>{
+  if(!u){$('#app').innerHTML='<div class="c"><h2>Admin</h2><button onclick="login()">Sign in with Google</button></div>';return}
+  if(u.email!==ADMIN_EMAIL){$('#app').innerHTML='<div class="c"><h3>Not allowed</h3><button onclick="out()">Sign out</button></div>';return}
+  await load();draw()});
+async function load(){
+  const r=await Promise.all(['users','shops','premium','codes','orders'].map(n=>getDocs(collection(db,n))));
+  U=r[0].docs.map(d=>({id:d.id,...d.data()}));
+  SH={};r[1].forEach(d=>SH[d.id]=d.data());
+  PR={};r[2].forEach(d=>PR[d.id]=d.data().until?.toMillis?.()||0);
+  CD=r[3].docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  OR=r[4].docs.map(d=>({id:d.id,...d.data()}))}
+const dt=t=>t?new Date(t).toLocaleDateString():'—';
+function draw(){
+  const act=Object.values(PR).filter(x=>x>Date.now()).length;
+  const tabs=[['over','Overview'],['users','Users'],['prem','Sellers & Premium'],['codes','Codes']];
+  let h=`<div class="r2"><h3>⚙️ ${BRAND} Admin</h3><button class="g" onclick="out()">Sign out</button></div><div class="t">${tabs.map(([k,l])=>`<button class="${T===k?'on':''}" onclick="tab('${k}')">${l}</button>`).join('')}</div>`;
+  if(T==='over')h+=`<div class="g2">${[['Users',U.length],['Sellers',U.filter(u=>u.role==='seller').length],['Customers',U.filter(u=>u.role==='customer').length],['Active premium',act],['Orders',OR.length],['Unused codes',CD.filter(c=>!c.used).length]].map(([l,n])=>`<div class="c"><div class="n">${n}</div><small>${l}</small></div>`).join('')}</div>`;
+  if(T==='users'){
+    const list=U.filter(u=>(RF==='all'||u.role===RF)&&(!Q||(u.name+u.email).toLowerCase().includes(Q.toLowerCase())));
+    h+=`<div class="r2"><select onchange="RF=this.value;draw()"><option value="all">All</option><option value="seller" ${RF==='seller'?'selected':''}>Sellers</option><option value="customer" ${RF==='customer'?'selected':''}>Customers</option></select><input placeholder="Search name/email" value="${esc(Q)}" onchange="Q=this.value;draw()"></div>`+
+    list.map(u=>`<div class="c"><div class="r2"><div><b>${esc(u.name)}</b> ${u.blocked?'🚫':''}<br><small>${esc(u.email)} • ${u.role} • joined ${dt(u.createdAt?.toMillis?.())}</small>${u.role==='seller'&&SH[u.id]?`<br><small>🏪 ${esc(SH[u.id].shopName)} • 📞 ${esc(SH[u.id].whatsapp)}</small>`:''}${u.phone?`<br><small>📞 ${esc(u.phone)}</small>`:''}</div><div><button class="g" onclick="blk('${u.id}',${!u.blocked})">${u.blocked?'Unblock':'Block'}</button> <button class="r" onclick="delU('${u.id}')">Delete</button></div></div></div>`).join('')||'<div class="c">No users</div>';}
+  if(T==='prem')h+=U.filter(u=>u.role==='seller').map(u=>{const p=PR[u.id]||0,a=p>Date.now();return`<div class="c"><div class="r2"><div><b>${esc(SH[u.id]?.shopName||u.name)}</b><br><small>${esc(u.email)}</small><br>${a?`✅ Premium until ${dt(p)}`:p?`❌ Expired ${dt(p)}`:'Free plan'}</div><div><button onclick="addDays('${u.id}',30)">+30 days</button> <button class="g" onclick="rmPrem('${u.id}')">Remove</button></div></div></div>`}).join('')||'<div class="c">No sellers yet</div>';
+  if(T==='codes')h+=`<div class="c"><b>Generate premium codes</b><div class="r2" style="margin-top:8px"><input id="qn" type="number" min="1" max="50" value="1" style="width:80px"><select id="qm"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select><button onclick="gen()">Generate</button><button class="g" onclick="copyAll()">Copy all unused</button></div></div>`+
+    CD.map(c=>`<div class="c r2"><div><code>${c.id}</code> <small>${c.months} month(s) • ${c.used?'USED':'unused'}</small></div><div>${c.used?'':`<button class="g" onclick="cpy('${c.id}',${c.months})">Copy message</button> `}<button class="r" onclick="delC('${c.id}')">✕</button></div></div>`).join('');
+  $('#app').innerHTML=h}
+window.draw=draw;window.RF=RF;
+window.gen=async()=>{const n=Math.min(50,+$('#qn').value||1),m=+$('#qm').value,ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const r4=()=>Array.from({length:4},()=>ch[crypto.getRandomValues(new Uint8Array(1))[0]%ch.length]).join('');
+  const b=writeBatch(db);for(let i=0;i<n;i++)b.set(doc(db,'codes','MP-'+r4()+'-'+r4()),{months:m,used:false,createdAt:serverTimestamp()});
+  await b.commit();await load();draw()};
+const msg=(c,m)=>`Your ${BRAND} Premium code: ${c} (${m} month${m>1?'s':''}). Open the app > Premium > enter the code and tap Activate.`;
+window.cpy=(c,m)=>{navigator.clipboard.writeText(msg(c,m));alert('Copied – paste it in WhatsApp')};
+window.copyAll=()=>{navigator.clipboard.writeText(CD.filter(c=>!c.used).map(c=>c.id+' ('+c.months+'m)').join('\n'));alert('Copied')};
+window.delC=async id=>{if(confirm('Delete code '+id+'?')){await deleteDoc(doc(db,'codes',id));await load();draw()}};
+window.addDays=async(uid,d)=>{const base=Math.max(Date.now(),PR[uid]||0);await setDoc(doc(db,'premium',uid),{sellerId:uid,code:'ADMIN',until:Timestamp.fromMillis(base+d*864e5)});await load();draw()};
+window.rmPrem=async uid=>{if(confirm('Remove premium?')){await deleteDoc(doc(db,'premium',uid));await load();draw()}};
+window.blk=async(id,v)=>{await updateDoc(doc(db,'users',id),{blocked:v});await load();draw()};
+window.delU=async id=>{if(confirm('Delete this user profile and shop? (Their Google login stays)')){await deleteDoc(doc(db,'users',id));await deleteDoc(doc(db,'shops',id)).catch(()=>{});await load();draw()}};
+</script></body></html>
