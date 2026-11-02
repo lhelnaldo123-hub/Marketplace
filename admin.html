@@ -14,7 +14,7 @@ code{background:#eee;padding:2px 6px;border-radius:4px;font-size:15px}
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{getFirestore,collection,getDocs,doc,setDoc,updateDoc,deleteDoc,deleteField,writeBatch,Timestamp,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-const ADMIN_EMAIL="YOUR_ADMIN_EMAIL@gmail.com",BRAND="MarketPlace";
+const ADMIN_EMAIL="lhelnaldo123@gmail.com",BRAND="MarketPlace";
 const fb=initializeApp({apiKey:"AIzaSyAPKiT3CjjgeDcPRbchediVNnHm0vP7J1o",authDomain:"marketplace-582c0.firebaseapp.com",projectId:"marketplace-582c0",storageBucket:"marketplace-582c0.firebasestorage.app",messagingSenderId:"591854592836",appId:"1:591854592836:web:00469e8b690aa11e772d11"});
 const auth=getAuth(fb),db=getFirestore(fb),$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
